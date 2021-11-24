@@ -1,0 +1,32 @@
+{
+  "alpine": {
+    "versions": [3.13],
+    "compiler_versions": [10],
+    "compilers": [
+      {
+        "cc": "clang",
+        "cxx": "clang++"
+      },
+      {
+        "cc": "gcc",
+        "cxx": "g++"
+      }
+    ],
+    "libraries": ["tree", "sqlite-libs", "sqlite-dev", "postgresql-libs", "postgresql-dev"]
+  },
+  "ubuntu": {
+    "versions": [20.04],
+    "compiler_versions": [10],
+    "compilers": [
+      {
+        "cc": "clang",
+        "cxx": "clang++"
+      },
+      {
+        "cc": "gcc",
+        "cxx": "g++"
+      }
+    ],
+    "libraries": ["tree", "libssl-dev", "sqlite3", "libsqlite3-dev", "libpq-dev"]
+  }
+}

@@ -1,0 +1,21 @@
+Dockerfile*
+*.Dockerfile
+
+# Git/Github stuff
+.git/
+.github/
+
+# Project stuff (directories)
+.idea/
+generated/
+templates/
+venv/
+
+# Project stuff (files)
+.dockerignore
+.gitignore
+compile.py
+config.json
+Makefile
+README.md
+requirements.txt

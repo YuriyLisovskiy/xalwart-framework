@@ -1,0 +1,12 @@
+# Python Stuff
+venv/
+
+# Project stuff
+generated/
+framework*
+
+# IDE
+.idea/
+
+# macOS files
+*.DS_Store
