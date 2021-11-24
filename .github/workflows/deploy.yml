@@ -1,0 +1,85 @@
+#name: Deploy
+#on:
+#  push:
+#    tags:
+#      - 'v*.*.*'
+name: Deploy
+on:
+  push:
+    branches:
+      - 'dev'
+jobs:
+  download_framework:
+    name: Download framework components
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - alpine
+          - ubuntu
+        compiler:
+          - name: clang
+            version: 10
+          - name: gcc
+            version: 10
+        component:
+          - artifact: xalwart.base
+            repo: YuriyLisovskiy/xalwart.base
+            workflow: build_and_test.yml
+          - artifact: xalwart.server
+            repo: YuriyLisovskiy/xalwart.server
+            workflow: build.yml
+          - artifact: xalwart.crypto
+            repo: YuriyLisovskiy/xalwart.crypto
+            workflow: build_and_test.yml
+          - artifact: xalwart.orm-sqlite-postgresql
+            repo: YuriyLisovskiy/xalwart.orm
+            workflow: build_and_test.yml
+          - artifact: xalwart
+            repo: YuriyLisovskiy/xalwart
+            workflow: build_and_test.yml
+    steps:
+      - name: Download the component
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          workflow: ${{ matrix.component.workflow }}
+          branch: master
+          name: ${{ matrix.component.artifact }}-${{ matrix.os }}-${{ matrix.compiler.name }}-${{ matrix.compiler.version }}
+          path: ./framework
+          repo: ${{ matrix.component.repo }}
+      - name: Upload component to artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: xalwart-framework-${{ matrix.os }}-${{ matrix.compiler.name }}
+          path: ./framework
+#  build_and_delpoy:
+#    name: Build and delpoy docker containers
+#    runs-on: ubuntu-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os:
+#          - name: alpine
+#            version: 3.13
+#          - name: ubuntu
+#            version: 20.04
+#        compiler:
+#          - clang-10
+#          - gcc-10
+#    steps:
+#      - name: Download the component
+#        uses: dawidd6/action-download-artifact@v2
+#        with:
+#          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+#          workflow: ${{ matrix.component.workflow }}
+#          branch: master
+#          name: ${{ matrix.component.artifact }}-${{ matrix.os }}-${{ matrix.compiler }}
+#          path: ./framework
+#          repo: ${{ matrix.component.repo }}
+#      - name: Upload component to artifact
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: xalwart-framework-${{ matrix.os }}-${{ matrix.compiler }}
+#          path: ./framework
