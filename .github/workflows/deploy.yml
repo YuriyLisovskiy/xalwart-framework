@@ -100,7 +100,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build the image
         run: |
-          sudo docker build xalwart/framework:0.0.0-${{ matrix.compiler.name }}-${{ matrix.os.name }} .
+          sudo docker build -t xalwart/framework:0.0.0-${{ matrix.compiler.name }}-${{ matrix.os.name }} .
       - name: Deploy the image
         run: |
           sudo docker push xalwart/framework:0.0.0-${{ matrix.compiler.name }}-${{ matrix.os.name }}
