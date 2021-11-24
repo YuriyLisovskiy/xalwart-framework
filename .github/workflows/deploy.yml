@@ -75,7 +75,7 @@ jobs:
       - name: Download the artifact
         uses: actions/download-artifact@v2
         with:
-          name: xalwart-framework-${{ matrix.os }}-${{ matrix.compiler.name }}
+          name: xalwart-framework-${{ matrix.os.name }}-${{ matrix.compiler.name }}
           path: ./framework
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
