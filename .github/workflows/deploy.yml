@@ -56,6 +56,8 @@ jobs:
           path: ./framework
   build_and_deploy:
     name: Build and delpoy docker containers
+    needs:
+      - download_framework
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
