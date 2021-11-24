@@ -2,6 +2,7 @@
 
 import os
 import json
+import argparse
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -35,22 +36,52 @@ def render_dockerfile(os_name, config, templates_env):
                     compiler_version=compiler_version,
                     libraries_to_install=render_libraries(cfg['libraries'], ' ' * 6)
                 )
-                with open('{}/{}-{}-{}-{}.Dockerfile'.format(
-                    GENERATED_PATH, os_name, os_version, compiler['cc'], compiler_version
-                ), 'w') as file:
+                with open('{}/{}-{}.Dockerfile'.format(GENERATED_PATH, os_name, compiler['cc']), 'w') as file:
                     file.write(f'{output}\n')
 
 
-def main():
-    if not os.path.isdir(GENERATED_PATH):
-        os.makedirs(GENERATED_PATH)
+def render_single_dockerfile(os_name, os_version, cc, compiler_version, config, templates_env):
+    cfg = config[os_name]
+    dockerfile = templates_env.get_template(f'{os_name}.Dockerfile')
+    output = dockerfile.render(
+        os_version=os_version,
+        cc=cc,
+        compiler_version=compiler_version,
+        libraries_to_install=render_libraries(cfg['libraries'], ' ' * 6)
+    )
+    with open('Dockerfile', 'w') as file:
+        file.write(f'{output}\n')
 
+
+def main(**kwargs):
     env = load_templates_env('./templates')
     config = load_config('./config.json')
 
-    render_dockerfile('alpine', config, env)
-    render_dockerfile('ubuntu', config, env)
+    if all(kwargs.values()):
+        render_single_dockerfile(
+            os_name=kwargs['os_name'],
+            os_version=kwargs['os_version'],
+            cc=kwargs['cc'],
+            compiler_version=kwargs['cc_version'],
+            config=config,
+            templates_env=env
+        )
+    else:
+        if not os.path.isdir(GENERATED_PATH):
+            os.makedirs(GENERATED_PATH)
+
+        render_dockerfile('alpine', config, env)
+        render_dockerfile('ubuntu', config, env)
 
 
 if __name__ == '__main__':
-    main()
+    ap = argparse.ArgumentParser()
+
+    # Add the arguments to the parser
+    ap.add_argument("-on", "--os-name", required=False, help="os")
+    ap.add_argument("-ov", "--os-version", required=False, help="os version")
+    ap.add_argument("-c", "--cc", required=False, help="compiler")
+    ap.add_argument("-cv", "--cc-version", required=False, help="compiler version")
+    args = vars(ap.parse_args())
+
+    main(**args)

@@ -54,32 +54,51 @@ jobs:
         with:
           name: xalwart-framework-${{ matrix.os }}-${{ matrix.compiler.name }}
           path: ./framework
-#  build_and_delpoy:
-#    name: Build and delpoy docker containers
-#    runs-on: ubuntu-latest
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os:
-#          - name: alpine
-#            version: 3.13
-#          - name: ubuntu
-#            version: 20.04
-#        compiler:
-#          - clang-10
-#          - gcc-10
-#    steps:
-#      - name: Download the component
-#        uses: dawidd6/action-download-artifact@v2
-#        with:
-#          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-#          workflow: ${{ matrix.component.workflow }}
-#          branch: master
-#          name: ${{ matrix.component.artifact }}-${{ matrix.os }}-${{ matrix.compiler }}
-#          path: ./framework
-#          repo: ${{ matrix.component.repo }}
-#      - name: Upload component to artifact
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: xalwart-framework-${{ matrix.os }}-${{ matrix.compiler }}
-#          path: ./framework
+  build_and_deploy:
+    name: Build and delpoy docker containers
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: alpine
+            version: 3.13
+          - name: ubuntu
+            version: 20.04
+        compiler:
+          - name: clang
+            version: 10
+          - name: gcc
+            version: 10
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download the artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: xalwart-framework-${{ matrix.os }}-${{ matrix.compiler.name }}
+          path: ./framework
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Compile docker files
+      run: |
+        python3 ./compile.py --os-name=${{ matrix.os.name }} \
+                             --os-version=${{ matrix.os.version }} \
+                             --cc=${{ matrix.compiler.name }} \
+                             --cc-version=${{ matrix.compiler.version }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build the image
+      run: |
+        sudo docker build xalwart/framework:0.0.0-${{ matrix.compiler.name }}-${{ matrix.os.name }} .
+    - name: Deploy the image
+      run: |
+        sudo docker push xalwart/framework:0.0.0-${{ matrix.compiler.name }}-${{ matrix.os.name }}
