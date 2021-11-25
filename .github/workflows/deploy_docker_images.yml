@@ -13,7 +13,7 @@ jobs:
         os:
           - alpine
           - ubuntu
-       compiler:
+        compiler:
           - name: clang
             version: 10
           - name: gcc
