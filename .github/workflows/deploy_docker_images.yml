@@ -7,15 +7,17 @@ jobs:
   download_framework:
     name: Download framework components
     runs-on: ubuntu-latest
-    env:
-      COMPILER_NAME: clang
-      COMPILER_VERSION: 10
     strategy:
       fail-fast: false
       matrix:
         os:
           - alpine
           - ubuntu
+       compiler:
+          - name: clang
+            version: 10
+          - name: gcc
+            version: 10
         component:
           - artifact: xalwart.base
             repo: YuriyLisovskiy/xalwart.base
@@ -39,13 +41,13 @@ jobs:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
           workflow: ${{ matrix.component.workflow }}
           branch: master
-          name: ${{ matrix.component.artifact }}-${{ matrix.os }}-${{ env.COMPILER_NAME }}-${{ env.COMPILER_VERSION }}
+          name: ${{ matrix.component.artifact }}-${{ matrix.os }}-${{ matrix.compiler.name }}-${{ matrix.compiler.version }}
           path: ./framework
           repo: ${{ matrix.component.repo }}
       - name: Upload component to artifact
         uses: actions/upload-artifact@v2
         with:
-          name: xalwart-framework-${{ matrix.os }}-${{ env.COMPILER_NAME }}
+          name: xalwart-framework-${{ matrix.os }}-${{ matrix.compiler.name }}
           path: ./framework
   build_and_deploy_general:
     name: Build and delpoy docker containers with clang++10 compiler
