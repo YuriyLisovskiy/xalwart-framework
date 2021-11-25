@@ -1,4 +1,4 @@
-## Xalwart Web Framework
+# Xalwart Web Framework
 
 ## Contents
 * [About](#about)
