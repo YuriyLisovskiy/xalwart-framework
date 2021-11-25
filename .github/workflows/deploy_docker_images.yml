@@ -1,0 +1,163 @@
+name: Deploy Docker Images
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+jobs:
+  download_framework:
+    name: Download framework components
+    runs-on: ubuntu-latest
+    env:
+      COMPILER_NAME: clang
+      COMPILER_VERSION: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - alpine
+          - ubuntu
+        component:
+          - artifact: xalwart.base
+            repo: YuriyLisovskiy/xalwart.base
+            workflow: build_and_test.yml
+          - artifact: xalwart.server
+            repo: YuriyLisovskiy/xalwart.server
+            workflow: build.yml
+          - artifact: xalwart.crypto
+            repo: YuriyLisovskiy/xalwart.crypto
+            workflow: build_and_test.yml
+          - artifact: xalwart.orm-sqlite-postgresql
+            repo: YuriyLisovskiy/xalwart.orm
+            workflow: build_and_test.yml
+          - artifact: xalwart
+            repo: YuriyLisovskiy/xalwart
+            workflow: build_and_test.yml
+    steps:
+      - name: Download the component
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          workflow: ${{ matrix.component.workflow }}
+          branch: master
+          name: ${{ matrix.component.artifact }}-${{ matrix.os }}-${{ env.COMPILER_NAME }}-${{ env.COMPILER_VERSION }}
+          path: ./framework
+          repo: ${{ matrix.component.repo }}
+      - name: Upload component to artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: xalwart-framework-${{ matrix.os }}-${{ env.COMPILER_NAME }}
+          path: ./framework
+  build_and_deploy_general:
+    name: Build and delpoy docker containers with clang++10 compiler
+    needs:
+      - download_framework
+    runs-on: ubuntu-latest
+    env:
+      COMPILER_NAME: clang
+      COMPILER_VERSION: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: alpine
+            version: 3.13
+          - name: ubuntu
+            version: 20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download the artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: xalwart-framework-${{ matrix.os.name }}-${{ env.COMPILER_NAME }}
+          path: ./framework
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Compile Dockerfile
+        run: |
+          python3 ./compile.py --os-name=${{ matrix.os.name }} \
+                               --os-version=${{ matrix.os.version }} \
+                               --cc=${{ env.COMPILER_NAME }} \
+                               --cc-version=${{ env.COMPILER_VERSION }}
+      - name: Get tag name
+        id: tag_name
+        run: |
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: xalwart/framework:${{ steps.tag_name.outputs.SOURCE_TAG }}-${{ matrix.os.name }}
+  build_and_deploy_specific:
+    name: Build and delpoy docker containers with specific compilers
+    needs:
+      - download_framework
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: alpine
+            version: 3.13
+          - name: ubuntu
+            version: 20.04
+        compiler:
+          - name: clang
+            version: 10
+          - name: gcc
+            version: 10
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download the artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: xalwart-framework-${{ matrix.os.name }}-${{ matrix.compiler.name }}
+          path: ./framework
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Compile Dockerfile
+        run: |
+          python3 ./compile.py --os-name=${{ matrix.os.name }} \
+                               --os-version=${{ matrix.os.version }} \
+                               --cc=${{ matrix.compiler.name }} \
+                               --cc-version=${{ matrix.compiler.version }}
+      - name: Get tag name
+        id: tag_name
+        run: |
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: xalwart/framework:${{ steps.tag_name.outputs.SOURCE_TAG }}-${{ matrix.os.name }}-${{ matrix.compiler.name }}
