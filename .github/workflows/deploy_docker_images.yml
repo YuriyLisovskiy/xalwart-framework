@@ -2,7 +2,7 @@ name: Deploy Docker Images
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - '*.*.*'
 jobs:
   download_framework:
     name: Download framework components
