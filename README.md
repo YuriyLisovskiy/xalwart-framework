@@ -9,6 +9,7 @@
 * [Components](#components)
 * [Tools](#tools)
 * [Examples](#examples)
+* [Containers](#containers)
 * [License](#license)
 
 ## About
@@ -83,6 +84,10 @@ Currently, there is only one very simple example of using the Xalwart web framew
 It is called [OAuth Service](https://github.com/YuriyLisovskiy/oauth-service). More
 examples will appear soon in a separate repository. Link to these examples will be
 added here.
+
+## Containers
+You can run and test Xalwart application in Docker image. Check out the
+[list](https://hub.docker.com/orgs/xalwart/repositories) of available containers.
 
 ## License
 Xalwart web framework as well as this project is licensed under the
