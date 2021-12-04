@@ -81,7 +81,7 @@ To create a project and its components fast, there is a useful tool called
 
 ## Examples
 Currently, there is only one very simple example of using the Xalwart web framework.
-It is called [OAuth Service](https://github.com/YuriyLisovskiy/oauth-service). More
+It is called [OAuth Service](https://github.com/YuriyLisovskiy/xalwart-example). More
 examples will appear soon in a separate repository. Link to these examples will be
 added here.
 
